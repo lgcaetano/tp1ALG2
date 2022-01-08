@@ -96,6 +96,9 @@ def split_by_median(median, points, index):
 def euclid_distance(a, b):
     return math.sqrt(((b[0] - a[0]) ** 2) + ((b[1] - a[1]) ** 2))
 
+def treat(num):
+    return num if num else 1
+
 
 class PriorityQueue:
     def __init__(self, k, ref):
@@ -121,7 +124,7 @@ class PriorityQueue:
             zero_count += 1 if not point[-1] else 0
             one_count += 1 if point[-1] else 0
         max_val = max(zero_count, one_count)
-        return 1 if zero_count == max_val else 0
+        return 1 if one_count == max_val else 0
 
 
 class Node:
@@ -224,12 +227,15 @@ class XNN:
         fake_negatives = matrix[0][1]
         fake_positives = matrix[1][0]
 
-        self.precision = real_positives / (real_positives + fake_positives)
-        self.recall = real_positives / (real_positives + fake_negatives)
-        self.accuracy = (real_positives + real_negatives) / total
+        self.precision = real_positives / treat(real_positives + fake_positives)
+        self.recall = real_positives / treat(real_positives + fake_negatives)
+        self.accuracy = (real_positives + real_negatives) / treat(total)
 
     def print_test_results(self):
-        print(f"Dados do algoritmo:\nPrecisão: {self.precision}\nRevocação: {self.recall}\nAcurácia:{self.accuracy}")
+        print(f"Dados do algoritmo:\nPrecisão: {self.precision}\nRevocação: {self.recall}\nAcurácia: {self.accuracy}\n")
+
+
+
 
 def split_n_from(arr, n):
     selected = []
@@ -240,18 +246,12 @@ def split_n_from(arr, n):
         del copy[index]
     return [selected, copy]
 
-def get_data_from_sets(datasets, limit):
-    data = []
-    for dataset in datasets:
-        data += read_and_parse_dataset(f"datasets/{dataset}")[:limit]
-    return data
+
 
 files = os.listdir("datasets/")
 
-[training_datasets, test_datasets] = split_n_from(files, 3)
-training_data = get_data_from_sets(training_datasets, 1000)
-test_data = get_data_from_sets(test_datasets, 1000)
-
-model = XNN(training_data, test_data, 1)
-
-model.print_test_results()
+for file in files:
+    data = read_and_parse_dataset(f"datasets/{file}")
+    [train_data, test_data] = split_n_from(data, math.floor(len(data) * 0.3))
+    print(f"Dataset {file}:\n")
+    XNN(train_data, test_data, 5).print_test_results()
