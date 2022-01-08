@@ -53,7 +53,7 @@ def read_and_parse_dataset(file):
     for line in file:
         if not line[0] == "@":
             data = line[:-1].split(",")
-            dataset.append(str_arr_to_num(data[:2]) + data[-1:])
+            dataset.append(str_arr_to_num(data[:-1]) + data[-1:])
     return convert_classes(dataset)
 
 def matrix_copy(matrix):
@@ -94,7 +94,10 @@ def split_by_median(median, points, index):
     return [smaller_or_equal, greater]
 
 def euclid_distance(a, b):
-    return math.sqrt(((b[0] - a[0]) ** 2) + ((b[1] - a[1]) ** 2))
+    sum_of_squares = 0
+    for i in range(len(a) - 1):
+        sum_of_squares += (b[i] - a[i]) ** 2
+    return math.sqrt(sum_of_squares)
 
 def treat(num):
     return num if num else 1
@@ -151,7 +154,7 @@ class KDTree:
         if len(points) <= 1:
             return Node([*points[0]], depth)
         node = None
-        index = depth % 2
+        index = depth % (len(points[0]) - 1)
         median = get_median(points, index)
         [p1, p2] = split_by_median(median, points, index)
         node = Node(median, depth)
@@ -183,7 +186,7 @@ class KDTree:
         
         ref = queue.ref_point
         depth = node.depth
-        index = depth % 2
+        index = depth % (len(ref) - 1)
         
         greater = True if ref[index] > median else False
         first = node.right if greater else node.left
@@ -246,12 +249,16 @@ def split_n_from(arr, n):
         del copy[index]
     return [selected, copy]
 
+def run_algorithm(k):
+    files = os.listdir("datasets/")
+
+    for file in files:
+        data = read_and_parse_dataset(f"datasets/{file}")
+        [train_data, test_data] = split_n_from(data, math.floor(len(data) * 0.3))
+        print(f"Dataset {file}:\n")
+        XNN(train_data, test_data, k).print_test_results()
 
 
-files = os.listdir("datasets/")
+run_algorithm(1)
 
-for file in files:
-    data = read_and_parse_dataset(f"datasets/{file}")
-    [train_data, test_data] = split_n_from(data, math.floor(len(data) * 0.3))
-    print(f"Dataset {file}:\n")
-    XNN(train_data, test_data, 5).print_test_results()
+
